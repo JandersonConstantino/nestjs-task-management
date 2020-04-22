@@ -21,6 +21,8 @@ import { TaskStatus } from './task-status.enum'
 import { CreateTaskDto, GetTasksFilterDto } from './dto'
 import { TaskStatusValidationPipe } from './pipes/task-status-validation.pipe'
 import { Task } from './task.entity'
+import { GetUser } from 'src/auth/get-user.decorator'
+import { User } from 'src/auth/user.entity'
 
 @Controller('tasks')
 @UseGuards(AuthGuard())
@@ -29,38 +31,49 @@ export class TasksController {
 
   @Get()
   @UsePipes(ValidationPipe)
-  async getTasks(@Query() filterDto: GetTasksFilterDto): Promise<Task[]> {
-    const tasks = await this.tasksService.getTasks(filterDto)
+  async getTasks(
+    @Query() filterDto: GetTasksFilterDto,
+    @GetUser() user: User
+  ): Promise<Task[]> {
+    const tasks = await this.tasksService.getTasks(filterDto, user)
     return tasks
   }
 
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number): Promise<Task> {
-    return await this.tasksService.getById(id)
+  async getById(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: User
+  ): Promise<Task> {
+    return await this.tasksService.getById(id, user)
   }
 
   @Post()
   @UsePipes(ValidationPipe)
-  async createTask(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
-    const task = await this.tasksService.createTask(createTaskDto)
+  async createTask(
+    @Body() createTaskDto: CreateTaskDto,
+    @GetUser() user: User
+  ): Promise<Task> {
+    const task = await this.tasksService.createTask(createTaskDto, user)
     return task
   }
 
   @Patch(':id/status')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status', TaskStatusValidationPipe) status: TaskStatus
+    @Body('status', TaskStatusValidationPipe) status: TaskStatus,
+    @GetUser() user: User
   ): Promise<Task> {
-    const task = await this.tasksService.updateStatus(id, status)
+    const task = await this.tasksService.updateStatus(id, status, user)
     return task
   }
 
   @Delete(':id')
   async delete(
     @Param('id', ParseIntPipe) id: number,
-    @Res() response: Response
+    @Res() response: Response,
+    @GetUser() user: User
   ): Promise<void> {
-    await this.tasksService.deleteTask(id);
+    await this.tasksService.deleteTask(id, user);
     response.status(201).send()
   }
 }
